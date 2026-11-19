@@ -1,0 +1,33 @@
+{
+  "name": "user-agent-model-sync",
+  "displayName": "用户智能体模型同步",
+  "description": "让所有用户智能体自动跟随 Explore 的模型，新建智能体也自动加入。",
+  "publisher": "belugarex-local",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "engines": { "vscode": "^1.100.0" },
+  "categories": ["Other"],
+  "main": "./extension.cjs",
+  "extensionKind": ["workspace"],
+  "activationEvents": ["onStartupFinished"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false } },
+  "contributes": {
+    "commands": [
+      { "command": "userAgentModelSync.sync", "title": "用户智能体：立即同步 Explore 模型" },
+      { "command": "userAgentModelSync.status", "title": "用户智能体：查看模型同步状态" }
+    ],
+    "configuration": {
+      "title": "用户智能体模型同步",
+      "properties": {
+        "userAgentModelSync.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "自动将 Explore 的模型同步到所有用户级 VS Code 智能体；包含新建文件，不修改工作区智能体。"
+        }
+      }
+    }
+  },
+  "scripts": { "test": "node --test test/*.test.cjs" }
+}
