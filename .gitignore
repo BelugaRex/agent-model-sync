@@ -1,4 +1,7 @@
 .planning/
+/.vscode/task_plan.md
+/.vscode/findings.md
+/.vscode/progress.md
 /dist/
 *.vsix
 node_modules/

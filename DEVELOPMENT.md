@@ -41,4 +41,4 @@ Explore 来源属于 **Copilot 内部缓存契约，并非官方公开继承 API
 - 当前 Python 打包器用于本地 VSIX；正式发布前按 Marketplace 流程验证发布包，不能把本地打包成功等同于上架审核通过。
 - GitHub 建仓、远程地址、推送、发布及账户操作需要另行明确，不在本次目录整理范围。
 
-本次计划和历史验收在本地 `.planning/`，不随 Git 或 VSIX 分发。新工作区后续开发应从本文件和 README 开始，不必依赖 AC-UST 仓库。
+当前规划三件套直接放在 `.vscode/task_plan.md`、`.vscode/findings.md` 和 `.vscode/progress.md`，后续复用这三份文件，不再按任务新建日期目录。它们仅作本地记录，不随 Git 或 VSIX 分发；`.vscode/tasks.json` 仍纳入 Git。旧任务与迁移历史保留在 `.planning/`，仅作历史存档，不作为当前计划入口。新工作区后续开发应从本文件和 README 开始，不必依赖 AC-UST 仓库。
