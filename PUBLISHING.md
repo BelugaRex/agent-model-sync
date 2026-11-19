@@ -1,6 +1,6 @@
 # Publishing Agent Model Sync
 
-This is a **local preparation checklist**, not permission to publish. No Publisher account, repository, Marketplace listing or new extension identity has been created by these steps.
+This is a **local packaging checklist**, not permission to publish to Marketplace. The source repository is private at <https://github.com/BelugaRex/agent-model-sync>; GitHub source hosting does not create a Marketplace Publisher, listing, or new extension identity. The private repository is not yet a public support route.
 
 ## Local packaging
 

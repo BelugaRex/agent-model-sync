@@ -6,7 +6,7 @@
 - 名称已确定为 **Agent Model Sync**，不使用 Relay 或 Cavecrew 作为产品品牌。
 - 当前为本地开发版 0.1.0，MIT 许可，CommonJS，无第三方运行依赖。
 - Node.js 20+ 与 Python 3 可运行原有隔离测试和标准库打包；标准 Marketplace 打包开发工具需要 Node.js 22+ 与 npm 开发依赖。
-- 已建立独立 Git 仓库；没有远程仓库、推送或 Marketplace 发布。
+- GitHub 私有源码仓库：<https://github.com/BelugaRex/agent-model-sync>，主分支为 `main`。源码托管不等于公开发行或 Marketplace 上架；目前未发布到扩展市场。
 
 ## 开发入口
 
@@ -48,6 +48,6 @@ Explore 来源属于 **Copilot 内部缓存契约，并非官方公开继承 API
 - 公开 README 和 CHANGELOG 已准备；图标、真实反馈入口与兼容性矩阵仍待完善。自动写入、隐私和恢复边界须在发布前再次复核。
 - 当前 `private: true` 可防误发 npm，但不是 Marketplace 私有开关，也不会阻止 vsce 发布；`belugarex-local` 是否注册及正式名称/ID 可用性尚未确认。
 - Python 打包器继续用于本地 VSIX；标准官方候选包采用固定版本 `@vscode/vsce`、显式白名单与锁文件。打包通过不等于上架审核或真实宿主通过。
-- GitHub 建仓、远程地址、推送、发布及账户操作需要另行明确，不在本次本地发布准备范围。
+- GitHub 私有源码托管已获本轮授权；仓库公开、GitHub Release/VSIX 上传、Marketplace 发布、发布身份变更仍需另行明确。规划三件套和用户尚未提交的改动不随本轮源码推送上传。
 
 当前规划三件套直接放在 `.vscode/task_plan.md`、`.vscode/findings.md` 和 `.vscode/progress.md`，后续复用这三份文件，不再按任务新建日期目录。规划材料不打入 VSIX；是否纳入 Git 以用户当前规则为准，本轮保留用户 `.gitignore` 改动、暂不提交三件套。`.vscode/tasks.json` 仍纳入 Git。旧 `.planning/` 已不在工作区，不作为当前计划入口。后续开发应从本文件和 README 开始，不必依赖 AC-UST 仓库。
