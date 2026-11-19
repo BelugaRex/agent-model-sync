@@ -7,7 +7,7 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parent
 metadata = json.loads((ROOT / 'package.json').read_text())
-output = ROOT / f"{metadata['name']}-{metadata['version']}.vsix"
+output = ROOT / 'dist' / f"{metadata['name']}-{metadata['version']}.vsix"
 manifest = f'''<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
   <Metadata>
@@ -39,6 +39,7 @@ content_types = '''<?xml version="1.0" encoding="utf-8"?>
   <Default Extension="" ContentType="text/plain" />
 </Types>
 '''
+output.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
     archive.writestr('extension.vsixmanifest', manifest)
     archive.writestr('[Content_Types].xml', content_types)

@@ -13,9 +13,9 @@
 打开本目录作为 VS Code 工作区，运行内置任务：
 
 1. **Agent Model Sync: Test**：10 项隔离测试，真实临时文件系统和模拟 VS Code API；不写真实用户智能体。
-2. **Agent Model Sync: Package VSIX**：生成 `user-agent-model-sync-0.1.0.vsix`，仅打包 manifest、两个运行时文件、README 和 LICENSE，不自动安装。
+2. **Agent Model Sync: Package VSIX**：生成 `dist/user-agent-model-sync-0.1.0.vsix`，仅打包 manifest、两个运行时文件、README 和 LICENSE，不自动安装。
 
-同等 npm 入口为 `npm test` 和 `npm run package`。生成的 VSIX、本地规划及缓存不纳入 Git。
+同等 npm 入口为 `npm test` 和 `npm run package`。`dist/` 在首次打包时自动创建，重新打包会覆盖同名产物；需要留存的旧包应先另存。生成目录、本地规划及缓存不纳入 Git。
 
 ## 已安装版与开发源码分离
 

@@ -10,9 +10,10 @@
 - `sync-core.cjs`：发现、模型字段同步与备份安全检查。
 - `test/`：隔离测试；通过 VS Code 任务 **Agent Model Sync: Test** 或 `npm test` 运行。
 - `build_vsix.py`：本地 VSIX 打包；通过任务 **Agent Model Sync: Package VSIX** 或 `npm run package` 运行。
+- `dist/`：生成的 VSIX，不纳入 Git；首次打包时自动创建。
 - `DEVELOPMENT.md`：当前安装边界、开发注意事项和 Marketplace 后续事项。
 
-本项目从已验证的本地同步器复制而来，原目录、正在运行的扩展和用户备份均保留，未重新安装。正式显示名为 **Agent Model Sync**；为保持现有命令、设置与备份连续性，内部 ID 暂仍为 `belugarex-local.user-agent-model-sync`，本地 VSIX 文件名仍为 `user-agent-model-sync-0.1.0.vsix`。Marketplace publisher 和 package ID 在正式发布前单独确认；当前保留 `private: true`，不代表已经上架。
+本项目从已验证的本地同步器复制而来，原目录、正在运行的扩展和用户备份均保留，未重新安装。正式显示名为 **Agent Model Sync**；为保持现有命令、设置与备份连续性，内部 ID 暂仍为 `belugarex-local.user-agent-model-sync`，本地 VSIX 输出为 `dist/user-agent-model-sync-0.1.0.vsix`。Marketplace publisher 和 package ID 在正式发布前单独确认；当前保留 `private: true`，不代表已经上架。
 
 ## 使用
 

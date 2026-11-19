@@ -1,4 +1,5 @@
 .planning/
+/dist/
 *.vsix
 node_modules/
 __pycache__/
