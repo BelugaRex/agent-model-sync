@@ -37,7 +37,7 @@ test('host migrates legacy, follows A→B→fallback, discovers new files and su
     RelativePattern: class { constructor(base, pattern) { this.base = base; this.pattern = pattern; } },
     ConfigurationTarget: { Global: 1 },
     extensions: { getExtension: id => id === 'belugarex-local.cavecrew-model-sync' ? { isActive: true } : undefined },
-    window: { createOutputChannel: title => { assert.equal(title, '用户智能体模型同步'); return { appendLine() {}, show() {}, dispose() {} }; } },
+    window: { createOutputChannel: title => { assert.equal(title, 'Agent Model Sync'); return { appendLine() {}, show() {}, dispose() {} }; } },
     commands: { registerCommand(name, fn) { commands.set(name, fn); return disposable(); } },
     workspace: {
       textDocuments: [],

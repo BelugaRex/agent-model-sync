@@ -49,7 +49,7 @@ async function pauseLegacy(storageDir) {
 }
 
 async function activate(context) {
-  const output = vscode.window.createOutputChannel('用户智能体模型同步');
+  const output = vscode.window.createOutputChannel('Agent Model Sync');
   const sourceUri = vscode.Uri.joinPath(context.globalStorageUri, '..', 'github.copilot-chat', 'explore-agent', 'Explore.agent.md');
   const legacyStorage = vscode.Uri.joinPath(context.globalStorageUri, '..', 'belugarex-local.cavecrew-model-sync').fsPath;
   const roots = [

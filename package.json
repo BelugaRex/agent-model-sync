@@ -1,7 +1,7 @@
 {
   "name": "user-agent-model-sync",
-  "displayName": "用户智能体模型同步",
-  "description": "让所有用户智能体自动跟随 Explore 的模型，新建智能体也自动加入。",
+  "displayName": "Agent Model Sync",
+  "description": "Keep your user-defined VS Code agents on the same model as the Explore agent.",
   "publisher": "belugarex-local",
   "version": "0.1.0",
   "private": true,
@@ -14,11 +14,11 @@
   "capabilities": { "untrustedWorkspaces": { "supported": false } },
   "contributes": {
     "commands": [
-      { "command": "userAgentModelSync.sync", "title": "用户智能体：立即同步 Explore 模型" },
-      { "command": "userAgentModelSync.status", "title": "用户智能体：查看模型同步状态" }
+      { "command": "userAgentModelSync.sync", "title": "Agent Model Sync: 立即同步 Explore 模型" },
+      { "command": "userAgentModelSync.status", "title": "Agent Model Sync: 查看模型同步状态" }
     ],
     "configuration": {
-      "title": "用户智能体模型同步",
+      "title": "Agent Model Sync",
       "properties": {
         "userAgentModelSync.enabled": {
           "type": "boolean",
@@ -29,5 +29,8 @@
       }
     }
   },
-  "scripts": { "test": "node --test test/*.test.cjs" }
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "package": "python3 build_vsix.py"
+  }
 }

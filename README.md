@@ -1,6 +1,18 @@
-# 用户智能体模型同步
+# Agent Model Sync
 
-本机 VS Code 辅助扩展，ID：`belugarex-local.user-agent-model-sync`。**所有用户级 VS Code 智能体自动跟随 Explore，新建智能体自动加入**，不再限定 Cavecrew 名称。无网络、遥测、第三方依赖或轮询进程。
+让用户自定义的 VS Code 智能体自动使用与 Explore 相同的模型，新建智能体也自动加入。无网络、遥测、第三方依赖或轮询进程。
+
+## 独立开发项目
+
+直接在 VS Code 中打开本目录即可继续开发，无需安装依赖。
+
+- `extension.cjs`：扩展宿主入口与文件监听。
+- `sync-core.cjs`：发现、模型字段同步与备份安全检查。
+- `test/`：隔离测试；通过 VS Code 任务 **Agent Model Sync: Test** 或 `npm test` 运行。
+- `build_vsix.py`：本地 VSIX 打包；通过任务 **Agent Model Sync: Package VSIX** 或 `npm run package` 运行。
+- `DEVELOPMENT.md`：当前安装边界、开发注意事项和 Marketplace 后续事项。
+
+本项目从已验证的本地同步器复制而来，原目录、正在运行的扩展和用户备份均保留，未重新安装。正式显示名为 **Agent Model Sync**；为保持现有命令、设置与备份连续性，内部 ID 暂仍为 `belugarex-local.user-agent-model-sync`，本地 VSIX 文件名仍为 `user-agent-model-sync-0.1.0.vsix`。Marketplace publisher 和 package ID 在正式发布前单独确认；当前保留 `private: true`，不代表已经上架。
 
 ## 使用
 
@@ -15,8 +27,8 @@
 
 命令面板：
 
-- **用户智能体：立即同步 Explore 模型**
-- **用户智能体：查看模型同步状态**
+- **Agent Model Sync: 立即同步 Explore 模型**
+- **Agent Model Sync: 查看模型同步状态**
 
 设置 `userAgentModelSync.enabled` 为 false 或禁用本扩展即可暂停。已开始运行的子智能体不会中途换模型；调用方显式指定模型仍可能覆盖文件偏好。
 
@@ -40,12 +52,12 @@
 
 ## 停用、回滚与文件位置
 
-禁用/卸载 **用户智能体模型同步** 后，若保留当前固定模型，无需继续操作。若恢复原来模型行为，对照 `originals/` **只恢复 model 字段**，不要整文件覆盖后来对角色/权限的编辑。两个原有 Cavecrew 最初没有 model，可移除该字段。
+禁用/卸载 **Agent Model Sync**（现有旧安装仍显示“用户智能体模型同步”）后，若保留当前固定模型，无需继续操作。若恢复原来模型行为，对照 `originals/` **只恢复 model 字段**，不要整文件覆盖后来对角色/权限的编辑。两个原有 Cavecrew 最初没有 model，可移除该字段。
 
-源码、VSIX 和测试：`~/.local/share/user-agent-model-sync/`。旧 `~/.local/share/cavecrew-model-sync/` 只作为历史回滚资料保留，勿误装其历史 VSIX。无需修改 AC-UST 或重装 Copilot。目录不是 Git 仓库，采用备份，不初始化仓库或提交无关工作。
+当前开发目录：`~/hkust/agent-model-sync/`，拥有独立本地 Git 仓库，未配置远程或推送。原始已安装版本对应的源码与 VSIX 保留在 `~/.local/share/user-agent-model-sync/`；更旧的 `~/.local/share/cavecrew-model-sync/` 仅为历史回滚资料，勿误装其 VSIX。迁移历史保存在本地 `.planning/local-sync-history/`，不纳入 Git 或 VSIX。无需修改 AC-UST 或重装 Copilot。
 
 ## 开发与验收
 
-标准测试为 `node --test test/*.test.cjs`；打包为 `python3 build_vsix.py`，只使用 Node/Python 标准库。`verify-live.cjs` 只读验证实际激活版本、动态目标名单、模型值、原始正文/权限和安装源一致性。
+标准测试为 `node --test test/*.test.cjs`；打包为 `python3 build_vsix.py`，只使用 Node/Python 标准库。`verify-live.cjs` 是本机 WSL 安装验收脚本，只读验证实际激活版本、动态目标名单、模型值、原始正文/权限和安装源一致性。**新目录的品牌改动尚未安装，不能把旧安装的通过记录当作新源码的真实宿主验证；安装与源码不一致时此脚本会拒绝通过。**
 
 隔离测试覆盖新增/删除任意文件名、plain Markdown/profile、无 name/header、A→B→默认列表、CRLF/BOM、保留 mode/备份、旧备份迁移、重复同步、符号链接/错误格式/脏编辑器和逐文件异常。VS Code API 为模拟对象，磁盘为真实隔离临时目录；安装后另行验证当前宿主的真实新增文件发现，不改用户 Explore 选择进行试验。
