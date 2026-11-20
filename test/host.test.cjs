@@ -16,12 +16,17 @@ test('host migrates legacy, follows A→B→fallback, discovers new files and su
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const home = path.join(root, 'home');
   const agentsDir = path.join(home, '.copilot', 'agents');
-  const storage = path.join(root, 'User/globalStorage/belugarex-local.user-agent-model-sync');
+  const metadata = require('../package.json');
+  const storage = path.join(root, 'User/globalStorage', `${metadata.publisher}.${metadata.name}`.toLowerCase());
+  const previousStorage = path.join(root, 'User/globalStorage/belugarex-local.user-agent-model-sync');
   const source = path.join(root, 'User/globalStorage/github.copilot-chat/explore-agent/Explore.agent.md');
   const legacyStorage = path.join(root, 'User/globalStorage/belugarex-local.cavecrew-model-sync');
   await fs.mkdir(agentsDir, { recursive: true });
   await fs.mkdir(path.dirname(source), { recursive: true });
   await fs.mkdir(legacyStorage, { recursive: true });
+  await fs.mkdir(path.join(previousStorage, 'originals/copilot'), { recursive: true });
+  const original = agent('Before any synchronization');
+  await fs.writeFile(path.join(previousStorage, 'originals/copilot/anything.agent.md'), original);
   await fs.writeFile(path.join(legacyStorage, 'status.json'), JSON.stringify({ state: 'disabled' }));
   await fs.writeFile(path.join(agentsDir, 'anything.agent.md'), agent());
   await fs.writeFile(source, agent('Explore', 'model: A (provider)'));
@@ -31,12 +36,14 @@ test('host migrates legacy, follows A→B→fallback, discovers new files and su
   const listeners = [];
   let enabled = true;
   let legacyEnabled = true;
+  let previousWriter;
   const updates = [];
   const vscode = {
     Uri: { file: uri, joinPath: (base, ...parts) => uri(path.join(base.fsPath, ...parts)) },
     RelativePattern: class { constructor(base, pattern) { this.base = base; this.pattern = pattern; } },
     ConfigurationTarget: { Global: 1 },
-    extensions: { getExtension: id => id === 'belugarex-local.cavecrew-model-sync' ? { isActive: true } : undefined },
+    extensions: { getExtension: id => id === 'belugarex-local.user-agent-model-sync' ? previousWriter
+      : id === 'belugarex-local.cavecrew-model-sync' ? { isActive: true } : undefined },
     window: { createOutputChannel: title => { assert.equal(title, 'Agent Model Sync'); return { appendLine() {}, show() {}, dispose() {} }; } },
     commands: { registerCommand(name, fn) { commands.set(name, fn); return disposable(); } },
     workspace: {
@@ -65,6 +72,7 @@ test('host migrates legacy, follows A→B→fallback, discovers new files and su
   assert.equal(api.getStatus().state, 'synced');
   assert.equal(api.getStatus().extensionVersion, 'test');
   assert.equal(api.getStatus().legacyState, 'disabled');
+  assert.equal(await fs.readFile(path.join(storage, 'originals/copilot/anything.agent.md'), 'utf8'), original);
   assert.deepEqual(updates, [['enabled', false, 1]]);
   assert.equal(watchers[1].pattern.pattern, '*.md');
   assert.equal(watchers[2].pattern.pattern, '*.agent.md');
@@ -92,6 +100,34 @@ test('host migrates legacy, follows A→B→fallback, discovers new files and su
   enabled = true;
   await commands.get('userAgentModelSync.sync')();
   assert.equal(api.getStatus().state, 'synced');
+  previousWriter = { isActive: false };
+  const beforeBlocked = await fs.readFile(path.join(agentsDir, 'anything.agent.md'), 'utf8');
+  await fs.writeFile(source, agent('Explore', 'model: Must not write'));
+  await commands.get('userAgentModelSync.sync')();
+  assert.equal(api.getStatus().state, 'blocked');
+  assert.match(api.getStatus().error, /belugarex-local.user-agent-model-sync/);
+  assert.equal(await fs.readFile(path.join(agentsDir, 'anything.agent.md'), 'utf8'), beforeBlocked);
+  assert.equal(enabled, true);
+  assert.deepEqual(updates, [['enabled', false, 1]]);
+  previousWriter = undefined;
+  await commands.get('userAgentModelSync.sync')();
+  assert.equal(api.getStatus().state, 'synced');
+  assert.match(await fs.readFile(path.join(agentsDir, 'anything.agent.md'), 'utf8'), /model: Must not write/);
+  assert.equal(await fs.readFile(path.join(previousStorage, 'originals/copilot/anything.agent.md'), 'utf8'), original);
+  assert.equal(await fs.readFile(path.join(storage, 'originals/copilot/anything.agent.md'), 'utf8'), original);
   for (const item of context.subscriptions) item.dispose();
   watchers[0].callbacks[1](); assert.equal(timers.size, 0);
+});
+
+test('old shared-setting writer blocks activation before commands or writes even when inactive', async () => {
+  const nativeRequire = createRequire(path.join(__dirname, '..', 'extension.cjs'));
+  for (const isActive of [true, false]) {
+    const vscode = {
+      extensions: { getExtension: id => id === 'belugarex-local.user-agent-model-sync' ? { isActive } : undefined },
+      window: { createOutputChannel() { assert.fail('must refuse before allocating host resources'); } }
+    };
+    const sandbox = { module: { exports: {} }, require: name => name === 'vscode' ? vscode : nativeRequire(name) };
+    vm.runInNewContext(await fs.readFile(path.join(__dirname, '..', 'extension.cjs'), 'utf8'), sandbox);
+    await assert.rejects(sandbox.module.exports.activate({}), /belugarex-local.user-agent-model-sync/);
+  }
 });

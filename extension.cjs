@@ -7,6 +7,12 @@ const path = require('node:path');
 const os = require('node:os');
 const { syncFiles } = require('./sync-core.cjs');
 
+function assertPreviousWriterStopped() {
+  if (vscode.extensions.getExtension('belugarex-local.user-agent-model-sync')) {
+    throw new Error('请先禁用或卸载旧扩展 belugarex-local.user-agent-model-sync，并重载所有共用 HOME 的窗口；新旧扩展共享命令和设置，不能同时启用');
+  }
+}
+
 async function pauseLegacy(storageDir) {
   const legacy = vscode.extensions.getExtension('belugarex-local.cavecrew-model-sync');
   if (!legacy) return 'not-installed';
@@ -49,8 +55,10 @@ async function pauseLegacy(storageDir) {
 }
 
 async function activate(context) {
+  assertPreviousWriterStopped();
   const output = vscode.window.createOutputChannel('Agent Model Sync');
   const sourceUri = vscode.Uri.joinPath(context.globalStorageUri, '..', 'github.copilot-chat', 'explore-agent', 'Explore.agent.md');
+  const previousStorage = vscode.Uri.joinPath(context.globalStorageUri, '..', 'belugarex-local.user-agent-model-sync').fsPath;
   const legacyStorage = vscode.Uri.joinPath(context.globalStorageUri, '..', 'belugarex-local.cavecrew-model-sync').fsPath;
   const roots = [
     { id: 'copilot', dir: path.join(os.homedir(), '.copilot', 'agents'), plainMarkdown: true },
@@ -71,9 +79,10 @@ async function activate(context) {
       if (!vscode.workspace.getConfiguration('userAgentModelSync').get('enabled', true)) {
         status = { ...status, state: 'disabled', checkedAt: new Date().toISOString() };
       } else {
+        assertPreviousWriterStopped();
         const legacyState = await pauseLegacy(legacyStorage);
         const result = await syncFiles({ sourcePath: sourceUri.fsPath, roots, storageDir,
-          legacyStorageDir: legacyStorage, canWrite: isClean });
+          previousStorageDir: previousStorage, legacyStorageDir: legacyStorage, canWrite: isClean });
         status = { state: result.errors.length ? 'partial' : 'synced', extensionVersion,
           source: sourceUri.fsPath, roots, legacyState, ...result, checkedAt: new Date().toISOString() };
         output.appendLine(`${status.checkedAt} 已同步 ${result.targets.length} 个用户智能体，更新 ${result.changed.length} 个：${result.model}`);

@@ -2,7 +2,7 @@
 
 Keep user-defined VS Code agents on the same model as the Copilot Chat Explore agent. The extension watches the locally generated Explore configuration and updates only the top-level `model` field of user-level agent files. It makes no network requests, collects no telemetry, has no runtime dependencies, and runs no polling process.
 
-> **Status:** `0.1.0` is a local Marketplace packaging candidate, not a published extension. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The manifest remains `private: true` to prevent accidental npm publication; this is not a Marketplace privacy setting. The publisher `belugarex-local` has not been verified as registered, and no Marketplace listing or icon exists yet. A locally built VSIX is not evidence of publication, Marketplace review, or cross-platform support.
+> **Status:** `0.1.0` is a local Marketplace packaging candidate, not a published extension. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The owner confirmed Publisher ID `BelugaRex`; this candidate uses `BelugaRex.user-agent-model-sync`. Ownership and upload permissions have not been independently authenticated here. The manifest remains `private: true` to prevent accidental npm publication; this is not a Marketplace privacy setting. No Marketplace listing or icon exists yet. A locally built VSIX is not evidence of publication, Marketplace review, or cross-platform support.
 
 ## What it does
 
@@ -53,21 +53,27 @@ This cache layout is an **unofficial internal contract of `github.copilot-chat`*
 
 If another extension with a different publisher or package name writes the same agent files, disable it before enabling this package. Reusing the same extension ID is not a migration solution when moving to a new ID.
 
-For continuity only, this candidate recognizes the older local writer `belugarex-local.cavecrew-model-sync`. It requests that extension to stop by setting `cavecrewModelSync.enabled` to `false` globally and waits for confirmation before writing. If a workspace setting forces the old writer on, synchronization blocks instead of double-writing. This handling is specific to that legacy ID and does not generalize to other extensions.
+### Moving from the local extension
+
+Before loading this candidate, retain a separate copy of the old extension's `originals/`, disable or uninstall `belugarex-local.user-agent-model-sync`, and reload **all windows sharing the same HOME**. Leave its globalStorage in place for migration. Both identities share `userAgentModelSync.enabled` and command IDs, so this extension does not toggle that shared setting to stop the old one.
+
+If VS Code exposes the old local extension, even if it has not activated yet, this candidate refuses activation **before registering commands or starting synchronization**. The activation error instructs you to stop the old extension and reload; a fresh status file is not created on this early refusal. If the old extension appears during a later sync, that sync records `blocked` instead. This is a same-host check, not a cross-window or cross-process lock.
+
+For continuity only, this candidate also recognizes the older local writer `belugarex-local.cavecrew-model-sync`. It requests that extension to stop by setting its separate `cavecrewModelSync.enabled` to `false` globally and waits for confirmation before writing. If a workspace setting forces the old writer on, synchronization blocks instead of double-writing. This automatic stop handling is specific to the Cavecrew ID and does not generalize to other extensions.
 
 ## Safety, errors, and backups
 
 - Refuses symlinked agent roots, files, and backup destinations; non-regular files; invalid UTF-8; files over 256 KiB; unclosed frontmatter; duplicate `model`/`target` keys; unsupported Explore-source model syntax; and incompatible targets. The parser is deliberately limited, not a general YAML validator.
 - Refuses to write to a dirty editor or over a file changed concurrently. Writes are compared before modification and read back afterward.
-- On first sync, each original file is stored under the extension globalStorage as `originals/copilot/<filename>` or `originals/profile/<filename>` with mode `0600`. Originals are created once and never overwritten. The two historical Cavecrew filenames can reuse earlier originals migrated from the legacy writer, preserving their pre-sync model state.
-- Files are processed one at a time. There is no multi-file transaction: a failure does not roll back files already written in the same pass.
+- On first sync, each original file is stored under the extension globalStorage as `originals/copilot/<filename>` or `originals/profile/<filename>` with mode `0600`. Originals are created once and never overwritten. An existing new-identity backup takes priority. Otherwise, for each discovered agent, the extension copies its matching per-root original from `belugarex-local.user-agent-model-sync` storage if present, then falls back to the two historical Cavecrew filenames' older originals, and finally to the current file. Old backups are only read, never modified or deleted; an unsafe or unreadable old backup blocks that target instead of silently using its current model.
+- Files are processed one at a time. There is no multi-file transaction: a failure does not roll back files already written in the same pass. Original backups do not provide crash/power-loss consistency guarantees; retain a separate copy before migration or removal.
 - Errors appear per file in the status and the extension output channel. Final status states are `synced`, `partial`, `blocked`, and `disabled` (initial state: `starting`); `status.json` in globalStorage records the activated extension version, discovery counts, successful paths, and per-file errors.
 
 ## Storage, privacy, and recovery
 
-The extension's backup/status files stay under VS Code's extension globalStorage: the `originals/` directory and `status.json`. The exact globalStorage path depends on the VS Code profile and installation. Model edits and local original copies are automatic; no confirmation prompt is shown. If the recognized legacy writer exists, its global `cavecrewModelSync.enabled` setting is also changed to `false` through the VS Code configuration API.
+The extension's backup/status files stay under VS Code's extension globalStorage: the `originals/` directory and `status.json`. The exact globalStorage path depends on the VS Code profile and installation; the new identity's storage directory is normally `belugarex.user-agent-model-sync` (lowercase). Model edits and local original copies are automatic; no confirmation prompt is shown. If the recognized Cavecrew writer exists, its global `cavecrewModelSync.enabled` setting is also changed to `false` through the VS Code configuration API.
 
-There is no network access, telemetry, runtime dependency, or external service. The extension reads the Explore cache and discovered agent files, writes model fields, originals and status, and may make the legacy global-settings change described above.
+There is no network access, telemetry, runtime dependency, or external service. The extension reads the Explore cache, discovered agent files and matching old originals, writes model fields, new originals and status, and may make the Cavecrew global-settings change described above.
 
 Disabling stops future writes. After uninstalling, reload VS Code to ensure the running instance has stopped. Neither operation automatically restores models. To roll back, use the matching original and restore **only the `model` field**; do not overwrite the whole file, because that would discard later role, tool, or body edits. If an agent originally had no model, remove the field. There is no custom backup-deletion hook; retain a separate copy before uninstalling because VS Code may clean extension storage.
 

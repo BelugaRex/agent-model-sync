@@ -143,3 +143,108 @@ test('backup symlink refuses writing target', async t => {
   assert.equal(result.errors.length, 1);
   assert.equal(await fs.readFile(target, 'utf8'), agent());
 });
+
+test('publisher migration preserves per-root originals, modern priority and existing new backups', async t => {
+  const options = await fixture(t);
+  const previousStorageDir = path.join(path.dirname(options.sourcePath), 'previous');
+  const legacyStorageDir = path.join(path.dirname(options.sourcePath), 'legacy');
+  await fs.mkdir(path.join(legacyStorageDir, 'originals'), { recursive: true });
+  await fs.writeFile(path.join(legacyStorageDir, 'originals/cavecrew.agent.md'), 'Older legacy original');
+  const entries = [
+    ['copilot', 'cavecrew.agent.md', agent('Original copilot')],
+    ['profile', 'cavecrew.agent.md', 'Original profile body\n'],
+    ['copilot', 'arbitrary.md', agent('Arbitrary original', 'model: Before sync')]
+  ];
+  for (const [rootId, filename, original] of entries) {
+    const root = options.roots.find(item => item.id === rootId);
+    await fs.mkdir(root.dir, { recursive: true });
+    await fs.mkdir(path.join(previousStorageDir, 'originals', rootId), { recursive: true });
+    await fs.writeFile(path.join(root.dir, filename), agent('Already synchronized', 'model: Current'));
+    await fs.writeFile(path.join(previousStorageDir, 'originals', rootId, filename), original);
+  }
+  const opts = { ...options, previousStorageDir, legacyStorageDir };
+  const result = await syncFiles(opts);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.targets.length, entries.length);
+  for (const [rootId, filename, original] of entries) {
+    const backup = path.join(options.storageDir, 'originals', rootId, filename);
+    assert.equal(await fs.readFile(backup, 'utf8'), original);
+    assert.equal((await fs.stat(backup)).mode & 0o777, 0o600);
+    assert.equal(await fs.readFile(path.join(previousStorageDir, 'originals', rootId, filename), 'utf8'), original);
+    await fs.writeFile(path.join(previousStorageDir, 'originals', rootId, filename), Buffer.from([0xff]));
+  }
+  assert.deepEqual((await syncFiles(opts)).errors, []);
+  for (const [rootId, filename, original] of entries) {
+    assert.equal(await fs.readFile(path.join(options.storageDir, 'originals', rootId, filename), 'utf8'), original);
+  }
+});
+
+test('missing previous originals fall back to legacy; unsafe previous originals block target writes', async t => {
+  const options = await fixture(t);
+  const previousStorageDir = path.join(path.dirname(options.sourcePath), 'previous');
+  const legacyStorageDir = path.join(path.dirname(options.sourcePath), 'legacy');
+  const dir = options.roots[0].dir;
+  await fs.mkdir(path.join(legacyStorageDir, 'originals'), { recursive: true });
+  await fs.writeFile(path.join(legacyStorageDir, 'originals/cavecrew.agent.md'), agent('Legacy original'));
+  await fs.writeFile(path.join(dir, 'cavecrew.agent.md'), agent('Current cavecrew'));
+  await fs.writeFile(path.join(dir, 'new-agent.md'), agent('New unsynced agent'));
+  const opts = { ...options, previousStorageDir, legacyStorageDir };
+  assert.deepEqual((await syncFiles(opts)).errors, []);
+  assert.equal(await fs.readFile(path.join(options.storageDir, 'originals/copilot/cavecrew.agent.md'), 'utf8'), agent('Legacy original'));
+  assert.equal(await fs.readFile(path.join(options.storageDir, 'originals/copilot/new-agent.md'), 'utf8'), agent('New unsynced agent'));
+  const previous = path.join(previousStorageDir, 'originals/copilot');
+  await fs.mkdir(previous, { recursive: true });
+  const original = agent('Do not overwrite', 'model: Current');
+  for (const filename of ['invalid.md', 'alias.md', 'cavecrew-builder.agent.md']) await fs.writeFile(path.join(dir, filename), original);
+  await fs.writeFile(path.join(previous, 'invalid.md'), Buffer.from([0xff]));
+  await fs.writeFile(path.join(previous, 'cavecrew-builder.agent.md'), Buffer.from([0xff]));
+  await fs.writeFile(path.join(legacyStorageDir, 'originals/cavecrew-builder.agent.md'), agent('Must not fallback'));
+  await fs.symlink(path.join(dir, 'alias.md'), path.join(previous, 'alias.md'));
+  const result = await syncFiles(opts);
+  assert.equal(result.errors.length, 3);
+  for (const filename of ['invalid.md', 'alias.md', 'cavecrew-builder.agent.md']) {
+    assert.equal(await fs.readFile(path.join(dir, filename), 'utf8'), original);
+    await assert.rejects(fs.stat(path.join(options.storageDir, 'originals/copilot', filename)), { code: 'ENOENT' });
+  }
+});
+
+test('symlinked previous backup directory blocks migration without changing targets', async t => {
+  const options = await fixture(t);
+  const previousStorageDir = path.join(path.dirname(options.sourcePath), 'previous');
+  const actual = path.join(path.dirname(options.sourcePath), 'actual-originals');
+  await fs.mkdir(actual);
+  await fs.mkdir(path.join(previousStorageDir, 'originals'), { recursive: true });
+  await fs.symlink(actual, path.join(previousStorageDir, 'originals/copilot'));
+  await fs.writeFile(path.join(actual, 'test.md'), agent('Old original'));
+  const target = path.join(options.roots[0].dir, 'test.md');
+  await fs.writeFile(target, agent('Current'));
+  const result = await syncFiles({ ...options, previousStorageDir });
+  assert.equal(result.errors.length, 1);
+  assert.match(result.errors[0].error, /symlinked parent/);
+  assert.equal(await fs.readFile(target, 'utf8'), agent('Current'));
+  assert.equal(await fs.readFile(path.join(actual, 'test.md'), 'utf8'), agent('Old original'));
+});
+
+test('unsafe legacy fallback, new backup directory and invalid existing backup refuse writes', async t => {
+  for (const boundary of ['legacy', 'new-directory', 'existing-backup']) {
+    const options = await fixture(t);
+    const target = path.join(options.roots[0].dir, 'cavecrew.agent.md');
+    const original = agent('Current', 'model: Old');
+    await fs.writeFile(target, original);
+    const legacyStorageDir = path.join(path.dirname(options.sourcePath), 'legacy');
+    if (boundary === 'legacy') {
+      await fs.mkdir(path.join(legacyStorageDir, 'originals'), { recursive: true });
+      await fs.symlink(target, path.join(legacyStorageDir, 'originals/cavecrew.agent.md'));
+    } else if (boundary === 'new-directory') {
+      await fs.mkdir(path.join(options.storageDir, 'originals'), { recursive: true });
+      await fs.symlink(options.roots[0].dir, path.join(options.storageDir, 'originals/copilot'));
+    } else {
+      await fs.mkdir(path.join(options.storageDir, 'originals/copilot'), { recursive: true });
+      await fs.writeFile(path.join(options.storageDir, 'originals/copilot/cavecrew.agent.md'), Buffer.from([0xff]));
+    }
+    const result = await syncFiles({ ...options, legacyStorageDir });
+    assert.equal(result.errors.length, 1, boundary);
+    assert.equal(await fs.readFile(target, 'utf8'), original, boundary);
+    assert.deepEqual(result.changed, [], boundary);
+  }
+});

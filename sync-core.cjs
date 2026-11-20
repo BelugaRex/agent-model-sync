@@ -137,21 +137,27 @@ async function discoverAgents(roots) {
   return { found, errors };
 }
 
-async function saveOriginal(storageDir, entry, text, legacyStorageDir) {
+async function saveOriginal(storageDir, entry, text, previousStorageDir, legacyStorageDir) {
   const originals = path.join(storageDir, 'originals', entry.root);
   await fs.mkdir(originals, { recursive: true, mode: 0o700 });
   if (await fs.realpath(originals) !== path.resolve(originals)) throw new Error('Refusing symlinked backup directory');
+  const backup = path.join(originals, entry.filename);
+  try { await readRegular(backup); return; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
   let original = text;
-  if (legacyStorageDir && entry.root === 'copilot' && ['cavecrew.agent.md', 'cavecrew-builder.agent.md'].includes(entry.filename)) {
-    try { original = await readRegular(path.join(legacyStorageDir, 'originals', entry.filename)); }
+  const previous = previousStorageDir && path.join(previousStorageDir, 'originals', entry.root, entry.filename);
+  const legacy = legacyStorageDir && entry.root === 'copilot'
+    && ['cavecrew.agent.md', 'cavecrew-builder.agent.md'].includes(entry.filename)
+    && path.join(legacyStorageDir, 'originals', entry.filename);
+  for (const candidate of [previous, legacy].filter(Boolean)) {
+    try { original = await readRegular(candidate); break; }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
-  const backup = path.join(originals, entry.filename);
   try { await fs.writeFile(backup, original, { flag: 'wx', mode: 0o600 }); }
-  catch (error) { if (error.code !== 'EEXIST') throw error; await regularPath(backup); }
+  catch (error) { if (error.code !== 'EEXIST') throw error; await readRegular(backup); }
 }
 
-async function syncFiles({ sourcePath, roots, storageDir, legacyStorageDir, canWrite = () => true }) {
+async function syncFiles({ sourcePath, roots, storageDir, previousStorageDir, legacyStorageDir, canWrite = () => true }) {
   const source = await readRegular(sourcePath);
   const model = extractModel(source);
   const { found, errors } = await discoverAgents(roots);
@@ -168,7 +174,7 @@ async function syncFiles({ sourcePath, roots, storageDir, legacyStorageDir, canW
   const targets = [];
   for (const entry of entries) {
     try {
-      await saveOriginal(storageDir, entry, entry.before, legacyStorageDir);
+      await saveOriginal(storageDir, entry, entry.before, previousStorageDir, legacyStorageDir);
       if (entry.before !== entry.after) {
         if (!canWrite(entry.filePath)) throw new Error('Dirty editor');
         await regularPath(entry.filePath);

@@ -8,9 +8,10 @@ const os = require('node:os');
 const { extractModel, discoverAgents, unchangedExceptModel, readRegular } = require('./sync-core.cjs');
 const metadata = require('./package.json');
 const userDir = path.join(os.homedir(), '.vscode-server/data/User');
-const storage = path.join(userDir, 'globalStorage/belugarex-local.user-agent-model-sync');
+const extensionId = `${metadata.publisher}.${metadata.name}`.toLowerCase();
+const storage = path.join(userDir, 'globalStorage', extensionId);
 const source = path.join(userDir, 'globalStorage/github.copilot-chat/explore-agent/Explore.agent.md');
-const installed = path.join(os.homedir(), '.vscode-server/extensions', `${metadata.publisher}.${metadata.name}-${metadata.version}`);
+const installed = path.join(os.homedir(), '.vscode-server/extensions', `${extensionId}-${metadata.version}`);
 
 async function verify() {
   const status = JSON.parse(await readRegular(path.join(storage, 'status.json')));

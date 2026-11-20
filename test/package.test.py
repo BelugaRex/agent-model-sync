@@ -152,6 +152,8 @@ class PackageTests(unittest.TestCase):
 
     def test_public_repository_metadata_is_consistent(self):
         base = 'https://github.com/BelugaRex/agent-model-sync'
+        self.assertEqual(self.metadata['publisher'], 'BelugaRex')
+        self.assertEqual(self.metadata['name'], 'user-agent-model-sync')
         self.assertEqual(self.metadata['repository'], {'type': 'git', 'url': base + '.git'})
         self.assertEqual(self.metadata['bugs'], {'url': base + '/issues'})
         self.assertEqual(self.metadata['homepage'], base + '#readme')

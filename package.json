@@ -2,7 +2,7 @@
   "name": "user-agent-model-sync",
   "displayName": "Agent Model Sync",
   "description": "Keep your user-defined VS Code agents on the same model as the Explore agent.",
-  "publisher": "belugarex-local",
+  "publisher": "BelugaRex",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
