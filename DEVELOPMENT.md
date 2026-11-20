@@ -4,29 +4,29 @@
 
 - 工作区目录：`~/hkust/agent-model-sync/`。
 - 名称已确定为 **Agent Model Sync**，不使用 Relay 或 Cavecrew 作为产品品牌。
-- 当前源码准备 0.1.1 Windows 补丁版，MIT 许可，CommonJS，无第三方运行依赖；不包含四个模型选单的新功能。
+- 当前源码准备 0.1.2 结果通知补丁版（保留 0.1.1 Windows 修复），MIT 许可，CommonJS，无第三方运行依赖；不包含四个模型选单的新功能。
 - Node.js 20+ 与 Python 3 可运行原有隔离测试和标准库打包；标准 Marketplace 打包开发工具需要 Node.js 22+ 与 npm 开发依赖。
-- GitHub 公开源码仓库：<https://github.com/BelugaRex/agent-model-sync>，主分支为 `main`；反馈入口为 [GitHub Issues](https://github.com/BelugaRex/agent-model-sync/issues)。[Marketplace 页面](https://marketplace.visualstudio.com/items?itemName=BelugaRex.user-agent-model-sync) 已发布 0.1.0；本地准备 0.1.1 不代表更新已上架。
+- GitHub 公开源码仓库：<https://github.com/BelugaRex/agent-model-sync>，主分支为 `main`；反馈入口为 [GitHub Issues](https://github.com/BelugaRex/agent-model-sync/issues)。[Marketplace 页面](https://marketplace.visualstudio.com/items?itemName=BelugaRex.user-agent-model-sync) 首发版本为 0.1.0；用户已报告 Windows 实际运行 0.1.1，本轮未独立复查其公开版本历史。本地准备 0.1.2 不代表更新已上架。
 
 ## 开发入口
 
 打开本目录作为 VS Code 工作区，运行内置任务：
 
 1. **Agent Model Sync: Test**：Linux 核心/模拟宿主隔离测试，使用临时文件系统；不写真实用户智能体。
-2. **Agent Model Sync: Package VSIX**：生成 `dist/user-agent-model-sync-0.1.1.vsix`，仅打包 manifest、两个运行时文件、README 和 LICENSE，不自动安装。
+2. **Agent Model Sync: Package VSIX**：生成 `dist/user-agent-model-sync-0.1.2.vsix`，仅打包 manifest、两个运行时文件、README 和 LICENSE，不自动安装。
 
-同等 npm 入口为 `npm test` 和 `npm run package`。Windows 定向回归使用 `node --test test/windows.test.cjs`，验证小写盘符、两个 root、备份与 Junction 拒绝；非 Windows 会跳过，不能把跳过当作平台通过。原核心套件含 POSIX 权限/符号链接假设。`dist/` 在首次打包时自动创建，重新打包会覆盖同版本产物；0.1.0 旧包保留。生成目录不纳入 Git。
+同等 npm 入口为 `npm test` 和 `npm run package`。`npm test` 还包含 `test/notifications.test.cjs` 的隔离通知回归；原 Test 任务只运行 core/mock host 文件。Windows 定向回归使用 `node --test test/windows.test.cjs`，验证小写盘符、两个 root、备份与 Junction 拒绝；非 Windows 会跳过，不能把跳过当作平台通过。原核心套件含 POSIX 权限/符号链接假设。`dist/` 在首次打包时自动创建，重新打包会覆盖同版本产物；0.1.0 与 0.1.1 旧包保留。生成目录不纳入 Git。
 
 ### 验证型 GitHub Actions（不发布）
 
 `.github/workflows/ci.yml` 在 push main、PR 或手动触发时，构建/校验候选包并以 SHA-256 串联 artifact，随后在 Ubuntu 24.04 + Node 22.23.5 + Xvfb 的真实 VS Code 1.147.0 Extension Host 连跑两轮。`npm run test:host` 要求已构建候选 VSIX，下载独立 VS Code 并安装到临时扩展目录；只有 harness 是开发扩展，产品安装路径及运行时哈希必须匹配 VSIX。
 
-HOME/XDG/用户数据/扩展/工作区/下载缓存均隔离，宿主环境使用 allowlist；测试后清理。覆盖无来源/坏来源阻止、model-only、originals、两个 agent root、命令、真实新增/变更/删除 watcher、停用与恢复。另有 Windows runner 连跑两轮定向文件系统回归，不启动 VS Code。旧 ID 守卫/迁移优先级仍由 mock/core 回归覆盖；不代表 Copilot 真实登录/cache、workspace trust 拒绝、Windows/macOS/Remote-WSL 完整宿主、多窗口或 Marketplace 上架。Linux 本地复现需要显示服务器或 `xvfb-run -a`，每次会重新下载 VS Code。失败仅上传三日脱敏错误摘要，不上传 VS Code 程序、规划笔记或真实用户数据。
+HOME/XDG/用户数据/扩展/工作区/下载缓存均隔离，宿主环境使用 allowlist；测试后清理。覆盖无来源/坏来源阻止、model-only、originals、两个 agent root、命令、真实新增/变更/删除 watcher、停用与恢复，以及零目标 empty 状态。通知级别、后台去重、详情与未关闭通知不阻塞队列由 mock API 回归覆盖，不等于桌面弹窗像素验证。另有 Windows runner 连跑两轮定向文件系统回归，不启动 VS Code。旧 ID 守卫/迁移优先级仍由 mock/core 回归覆盖；不代表 Copilot 真实登录/cache、workspace trust 拒绝、Windows/macOS/Remote-WSL 完整宿主、多窗口或 Marketplace 上架。Linux 本地复现需要显示服务器或 `xvfb-run -a`，每次会重新下载 VS Code。失败仅上传三日脱敏错误摘要，不上传 VS Code 程序、规划笔记或真实用户数据。
 
 ### 标准 Marketplace 候选包（仅本地）
 
 - Node.js 22+、npm 和 Python 3；`npm ci --ignore-scripts` 安装锁定的开发工具，扩展运行仍无第三方依赖。
-- `npm run package:list` 检查显式白名单；`npm run package:marketplace` 生成独立的 `dist/user-agent-model-sync-0.1.1-marketplace.vsix`，不会覆盖旧版包，也不会上传市场。
+- `npm run package:list` 检查显式白名单；`npm run package:marketplace` 生成独立的 `dist/user-agent-model-sync-0.1.2-marketplace.vsix`，不会覆盖旧版包，也不会上传市场。
 - `npm run verify:package` 验证实际 ZIP 条目、CRC、XML、身份及源码一致性；规划、脚本、测试、开发文档和依赖均不打入包。
 - `npm run test:package` 在真实临时目录验证首次打包、开发文件排除、公开链接元数据及异常包拒绝；需已安装开发依赖和 Node.js 22+，不会加载扩展或接触真实智能体。
 - 最低 VS Code 版本收紧为 `^1.147.0`，不再声明未经验证的 1.100.0；后续版本和其他平台仍需真实宿主证据。
@@ -46,11 +46,11 @@ package name、命令 `userAgentModelSync.*` 和设置 `userAgentModelSync.enabl
 
 ## 功能边界
 
-同步器只读 `github.copilot-chat/explore-agent/Explore.agent.md` 的 `model`，动态发现用户级智能体，只修改其 `model` 字段；角色、工具、其他 frontmatter 和原始备份保持原有规则。工作区 `.github/agents` 不在同步范围。
+同步器只读 `github.copilot-chat/explore-agent/Explore.agent.md` 的 `model`，动态发现用户级智能体，只修改其 `model` 字段；角色、工具、其他 frontmatter 和原始备份保持原有规则。工作区 `.github/agents` 不在同步范围。0.1.2 启动/手动同步显示非模态结果通知，后台相同结果去重；零发现明确标记 empty 并警告。详情按钮只打开本次状态，不触发同步；通知不是写入确认，VS Code 勿扰设置可能隐藏通知。
 
 Explore 来源属于 **Copilot 内部缓存契约，并非官方公开继承 API**。此前验证环境为 VS Code 1.147.0 / Copilot 0.75.0；不能据此声称其他平台、配置或后续版本已经验证。
 
-## Marketplace 0.1.1 更新关卡（0.1.0 已上架）
+## Marketplace 0.1.2 更新关卡
 
 - Publisher ID `BelugaRex` 已由用户明确确认并应用，保留 package name `user-agent-model-sync`；旧 local ID 防双写及 originals 迁移已加入隔离回归，正式安装前仍需先停旧实例并重载。
 - 公开 README 和 CHANGELOG、真实源码/反馈入口已准备；图标与兼容性矩阵仍待完善。自动写入、隐私和恢复边界须在发布前再次复核。

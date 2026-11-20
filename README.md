@@ -2,7 +2,14 @@
 
 Keep user-defined VS Code agents on the same model as the Copilot Chat Explore agent. The extension watches the locally generated Explore configuration and updates only the top-level `model` field of user-level agent files. It makes no network requests, collects no telemetry, has no runtime dependencies, and runs no polling process.
 
-> **Release status:** [Agent Model Sync on the Marketplace](https://marketplace.visualstudio.com/items?itemName=BelugaRex.user-agent-model-sync) was first published as `0.1.0`. This source prepares the `0.1.1` Windows bugfix; a locally built package does not prove that the update is published. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The manifest's `private: true` prevents accidental npm publication, not Marketplace distribution.
+> **Release status:** [Agent Model Sync on the Marketplace](https://marketplace.visualstudio.com/items?itemName=BelugaRex.user-agent-model-sync) was first published as `0.1.0`. This source prepares the `0.1.2` notification patch, including the `0.1.1` Windows fix; a locally built package does not prove that the update is published. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The manifest's `private: true` prevents accidental npm publication, not Marketplace distribution.
+
+## 0.1.2 visible sync results
+
+- Startup and **立即同步 Explore 模型** show a non-modal VS Code notification with the outcome. Successful summaries include the model and target/update counts; partial failures warn, and blocked synchronization reports an error.
+- No discovered agents now produces an `empty` status and a warning, not a misleading zero-agent success. **查看详情** opens the output with the notified run's source, exact scanned roots and errors, without running another sync. Zero targets means no user agent was modified; workspace agents are not included.
+- Background events notify only when the outcome, model, successful target list or errors change. Repeated checks and the changed count falling to zero do not keep showing notifications. Manual sync always gives feedback. Notifications do not wait for dismissal or ask for write approval.
+- Notification visibility still follows VS Code notification/Do Not Disturb settings. After updating, reload relevant windows and check the activated version.
 
 ## 0.1.1 Windows fix
 
@@ -71,7 +78,7 @@ For continuity only, this candidate also recognizes the older local writer `belu
 - Refuses to write to a dirty editor or over a file changed concurrently. Writes are compared before modification and read back afterward.
 - On first sync, each original file is stored under the extension globalStorage as `originals/copilot/<filename>` or `originals/profile/<filename>` with mode `0600`. Originals are created once and never overwritten. An existing new-identity backup takes priority. Otherwise, for each discovered agent, the extension copies its matching per-root original from `belugarex-local.user-agent-model-sync` storage if present, then falls back to the two historical Cavecrew filenames' older originals, and finally to the current file. Old backups are only read, never modified or deleted; an unsafe or unreadable old backup blocks that target instead of silently using its current model.
 - Files are processed one at a time. There is no multi-file transaction: a failure does not roll back files already written in the same pass. Original backups do not provide crash/power-loss consistency guarantees; retain a separate copy before migration or removal.
-- Errors appear per file in the status and the extension output channel. Final status states are `synced`, `partial`, `blocked`, and `disabled` (initial state: `starting`); `status.json` in globalStorage records the activated extension version, discovery counts, successful paths, and per-file errors.
+- Errors appear per file in the status and the extension output channel, with result notifications as described above. Final status states are `synced`, `empty` (no agents discovered), `partial`, `blocked`, and `disabled` (initial state: `starting`); `status.json` in globalStorage records the activated extension version, discovery counts, successful paths, and per-file errors.
 
 ## Storage, privacy, and recovery
 
@@ -85,8 +92,8 @@ Disabling stops future writes. After uninstalling, reload VS Code to ensure the 
 
 - `npm test` uses the Node built-in test runner and requires no dependency installation. The main core/mock suite is verified on Linux; Node 20 currently works there.
 - On Windows, run `node --test test/windows.test.cjs` for the dedicated temporary-filesystem regressions. These cases are skipped on other platforms; the main Linux suite has POSIX permission and symlink assumptions.
-- `npm run package` uses only the Python standard library and writes `dist/user-agent-model-sync-0.1.1.vsix`.
-- `npm run package:marketplace` uses the official packaging toolchain, requires `npm ci` and Node 22 or later, and writes a distinct `dist/user-agent-model-sync-0.1.1-marketplace.vsix`.
+- `npm run package` uses only the Python standard library and writes `dist/user-agent-model-sync-0.1.2.vsix`.
+- `npm run package:marketplace` uses the official packaging toolchain, requires `npm ci` and Node 22 or later, and writes a distinct `dist/user-agent-model-sync-0.1.2-marketplace.vsix`.
 - `npm run verify:package` checks that Marketplace packaging candidate.
 
 The standard package uses an explicit `files` allowlist; development tooling and planning notes are excluded from the VSIX and are never runtime dependencies. Contributor notes are available in [DEVELOPMENT.md](https://github.com/BelugaRex/agent-model-sync/blob/main/DEVELOPMENT.md) and [PUBLISHING.md](https://github.com/BelugaRex/agent-model-sync/blob/main/PUBLISHING.md); both are excluded from the VSIX. Report problems through [GitHub Issues](https://github.com/BelugaRex/agent-model-sync/issues).

@@ -93,13 +93,23 @@ async function run() {
   assert.equal(await fs.readFile(backup, 'utf8'), original);
 
   const beforeBlocked = await fs.readFile(agentPath, 'utf8');
+  await fs.unlink(agentPath);
+  await fs.unlink(profileAgent);
+  const empty = await sync();
+  assert.equal(empty.state, 'empty');
+  assert.equal(empty.discovered, 0);
+  assert.deepEqual(empty.targets, []);
+  assert.deepEqual(empty.errors, []);
+  assert.equal((await readStatus(storage)).state, 'empty');
+  await fs.writeFile(agentPath, beforeBlocked);
+  assert.equal((await sync()).state, 'synced');
   await fs.writeFile(source, '---\nname: Wrong Source\nmodel: Must not write\n---\n');
   assert.equal((await sync()).state, 'blocked');
   assert.equal(await fs.readFile(agentPath, 'utf8'), beforeBlocked);
   await fs.unlink(source);
   assert.equal((await sync()).state, 'blocked');
   assert.equal(await fs.readFile(agentPath, 'utf8'), beforeBlocked);
-  console.log('PASS: production VSIX; isolated HOME/storage; missing/invalid source; model-only backups; commands; watchers; disable/recovery');
+  console.log('PASS: production VSIX; isolated HOME/storage; missing/invalid source; model-only backups; commands; watchers; disable/recovery; zero-target empty status');
 }
 
 module.exports = { run };

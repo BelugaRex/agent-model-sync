@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.2 — 2026-11-20
+
+### Fixed
+
+- Show non-modal sync-result notifications on startup and manual sync, with a **查看详情** action that opens the notified run's source, scanned roots and errors without resyncing.
+- Report zero discovered user agents as `empty` with a warning instead of claiming a successful zero-agent synchronization. Discovery scope remains unchanged.
+- Warn on partial sync and show errors for blocked sync or status-save failures. Notification promises never block activation or the serialized sync queue; UI errors do not turn successful synchronization into a failure.
+- Deduplicate unchanged background outcomes, ignoring timestamps and updated-file counts; manual sync always gives feedback. Visibility remains subject to VS Code notification settings.
+
+### Tests
+
+- Add isolated notification API tests for severity, deduplication, pending/dismissed/failed messages and details actions; extend the real Linux VSIX host regression with zero-target status and recovery. Toast rendering is not asserted by these tests.
+- Retain the Windows drive-case/junction fix and tests. No four-model menus or expanded target discovery.
+
 ## 0.1.1 — 2026-11-20
 
 ### Fixed

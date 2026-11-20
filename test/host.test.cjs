@@ -44,7 +44,12 @@ test('host migrates legacy, follows A→B→fallback, discovers new files and su
     ConfigurationTarget: { Global: 1 },
     extensions: { getExtension: id => id === 'belugarex-local.user-agent-model-sync' ? previousWriter
       : id === 'belugarex-local.cavecrew-model-sync' ? { isActive: true } : undefined },
-    window: { createOutputChannel: title => { assert.equal(title, 'Agent Model Sync'); return { appendLine() {}, show() {}, dispose() {} }; } },
+    window: {
+      createOutputChannel: title => { assert.equal(title, 'Agent Model Sync'); return { appendLine() {}, show() {}, dispose() {} }; },
+      showInformationMessage: async () => undefined,
+      showWarningMessage: async () => undefined,
+      showErrorMessage: async () => undefined
+    },
     commands: { registerCommand(name, fn) { commands.set(name, fn); return disposable(); } },
     workspace: {
       textDocuments: [],
