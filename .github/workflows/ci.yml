@@ -1,0 +1,83 @@
+name: Verify extension package and isolated VS Code host
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Build Marketplace candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.23.5
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:package
+      - run: npm run package:marketplace
+      - run: npm run verify:package
+      - run: sha256sum dist/*-marketplace.vsix | tee dist/SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: marketplace-candidate
+          path: |
+            dist/*-marketplace.vsix
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 3
+
+  host:
+    name: Run exact VSIX in VS Code Extension Host
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.23.5
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: marketplace-candidate
+          path: dist
+      - name: Verify exact candidate artifact
+        run: |
+          sha256sum -c dist/SHA256SUMS
+      - run: npm run verify:package -- "$(find dist -maxdepth 1 -name '*-marketplace.vsix' -print -quit)"
+      - name: Verify Linux host tools
+        run: |
+          command -v xvfb-run
+          command -v unzip
+      - name: Run isolated Linux Extension Host twice
+        run: |
+          xvfb-run -a npm run test:host
+          xvfb-run -a npm run test:host
+        env:
+          CI: 'true'
+      - name: Upload sanitized host failure details
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: host-test-diagnostics
+          path: ${{ runner.temp }}/agent-model-sync-host-diagnostics.json
+          if-no-files-found: ignore
+          retention-days: 3

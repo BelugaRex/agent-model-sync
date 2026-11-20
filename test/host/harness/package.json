@@ -1,0 +1,9 @@
+{
+  "name": "agent-model-sync-host-harness",
+  "displayName": "Agent Model Sync Host Test Harness",
+  "version": "1.0.0",
+  "publisher": "ci",
+  "engines": { "vscode": "^1.147.0" },
+  "main": "./extension.cjs",
+  "activationEvents": ["onStartupFinished"]
+}

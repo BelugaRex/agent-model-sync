@@ -17,6 +17,12 @@
 
 同等 npm 入口为 `npm test` 和 `npm run package`。`dist/` 在首次打包时自动创建，重新打包会覆盖同名产物；需要留存的旧包应先另存。生成目录不纳入 Git。
 
+### 验证型 GitHub Actions（不发布）
+
+`.github/workflows/ci.yml` 在 push main、PR 或手动触发时，构建/校验候选包并以 SHA-256 串联 artifact，随后在 Ubuntu 24.04 + Node 22.23.5 + Xvfb 的真实 VS Code 1.147.0 Extension Host 连跑两轮。`npm run test:host` 要求已构建候选 VSIX，下载独立 VS Code 并安装到临时扩展目录；只有 harness 是开发扩展，产品安装路径及运行时哈希必须匹配 VSIX。
+
+HOME/XDG/用户数据/扩展/工作区/下载缓存均隔离，宿主环境使用 allowlist；测试后清理。覆盖无来源/坏来源阻止、model-only、originals、两个 agent root、命令、真实新增/变更/删除 watcher、停用与恢复。旧 ID 守卫/迁移优先级仍由 mock/core 回归覆盖；不代表 Copilot 真实登录/cache、workspace trust 拒绝、Windows/macOS/Remote-WSL、多窗口或 Marketplace 上架。Linux 本地复现需要显示服务器或 `xvfb-run -a`，每次会重新下载 VS Code。失败仅上传三日脱敏错误摘要，不上传 VS Code 程序、规划笔记或真实用户数据。
+
 ### 标准 Marketplace 候选包（仅本地）
 
 - Node.js 22+、npm 和 Python 3；`npm ci --ignore-scripts` 安装锁定的开发工具，扩展运行仍无第三方依赖。
