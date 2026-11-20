@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const { extractModel, updateModel, unchangedExceptModel, readRegular, syncFiles } = require('../sync-core.cjs');
+const { extractModel, updateModel, unchangedExceptModel, readRegular, syncFiles, sameRealPath } = require('../sync-core.cjs');
 const agent = (name = '', model = '') => `---\n${name ? 'name: ' + name + '\n' : ''}description: fixed\n${model ? model + '\n' : ''}target: vscode\ntools: ['read']\n---\n\nKeep role 中文.\n`;
 
 async function fixture(t) {
@@ -247,4 +247,26 @@ test('unsafe legacy fallback, new backup directory and invalid existing backup r
     assert.equal(await fs.readFile(target, 'utf8'), original, boundary);
     assert.deepEqual(result.changed, [], boundary);
   }
+});
+
+test('realpath comparison is exact except win32 drive-letter case', () => {
+  assert.equal(sameRealPath('/a/b', '/a/b'), true);
+  assert.equal(sameRealPath('/a/b', '/a/b', 'win32'), true);
+  assert.equal(sameRealPath('/a/b', '/a/B'), false);
+  assert.equal(sameRealPath('/a/b', '/a/b/'), false);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'C:\\Users\\Agent', 'win32'), true);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'c:\\Users\\Agent', 'win32'), true);
+  assert.equal(sameRealPath('c:\\Users\\Agent', 'C:\\Users\\Agent', 'win32'), true);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'c:\\Users\\Agent', 'linux'), false);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'c:\\Users\\Agent', 'darwin'), false);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'D:\\Users\\Agent', 'win32'), false);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'c:\\Users\\agent', 'win32'), false);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'C:\\Users\\agent', 'win32'), false);
+  assert.equal(sameRealPath('C:\\Users\\Agent', 'c:\\Users\\Agent\\', 'win32'), false);
+  assert.equal(sameRealPath('C:\\Users\\AGENT~1', 'c:\\Users\\Agent', 'win32'), false);
+  assert.equal(sameRealPath('C:/Users/Agent', 'c:\\Users\\Agent', 'win32'), false);
+  assert.equal(sameRealPath('\\\\server\\share\\x', '\\\\SERVER\\share\\x', 'win32'), false);
+  assert.equal(sameRealPath('\\\\?\\C:\\Users\\Agent', '\\\\?\\c:\\Users\\Agent', 'win32'), false);
+  assert.equal(sameRealPath('\\\\?\\C:\\Users\\Agent', '\\\\?\\C:\\Users\\Agent', 'win32'), true);
+  assert.equal(sameRealPath('C:Users', 'c:Users', 'win32'), false);
 });

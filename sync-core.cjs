@@ -102,9 +102,21 @@ function unchangedExceptModel(before, after) {
   return after === updateModel(before, parsed.model.raw);
 }
 
+// Exact realpath equality everywhere; on win32 only a drive-letter case difference is tolerated.
+function sameRealPath(actual, expected, platform = process.platform) {
+  if (actual === expected) return true;
+  if (platform !== 'win32' || typeof actual !== 'string' || typeof expected !== 'string') return false;
+  if (actual.length !== expected.length) return false;
+  if (!/^[A-Za-z]:[\\/]/.test(actual) || !/^[A-Za-z]:[\\/]/.test(expected)) return false;
+  return actual.slice(0, 1) !== expected.slice(0, 1)
+    && actual.slice(0, 1).toLowerCase() === expected.slice(0, 1).toLowerCase()
+    && actual.slice(1) === expected.slice(1);
+}
+
 async function regularPath(filePath) {
   const resolved = path.resolve(filePath);
-  if (await fs.realpath(path.dirname(resolved)) !== path.dirname(resolved)) throw new Error('Refusing symlinked parent');
+  const parent = path.dirname(resolved);
+  if (!sameRealPath(await fs.realpath(parent), parent)) throw new Error('Refusing symlinked parent');
   const stat = await fs.lstat(resolved);
   if (!stat.isFile() || stat.isSymbolicLink()) throw new Error('Refusing non-regular file');
   if (stat.size > MAX_BYTES) throw new Error('Agent exceeds 256 KiB');
@@ -122,7 +134,7 @@ async function discoverAgents(roots) {
   const errors = [];
   for (const root of roots) {
     try {
-      if (await fs.realpath(root.dir) !== path.resolve(root.dir)) throw new Error('Refusing symlinked agent root');
+      if (!sameRealPath(await fs.realpath(root.dir), path.resolve(root.dir))) throw new Error('Refusing symlinked agent root');
       for (const entry of (await fs.readdir(root.dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
         if (entry.name.startsWith('.') || /^(?:README|LICENSE|CHANGELOG)\.md$/i.test(entry.name)) continue;
         if (!(root.plainMarkdown ? /\.md$/i : /\.agent\.md$/i).test(entry.name)) continue;
@@ -140,7 +152,7 @@ async function discoverAgents(roots) {
 async function saveOriginal(storageDir, entry, text, previousStorageDir, legacyStorageDir) {
   const originals = path.join(storageDir, 'originals', entry.root);
   await fs.mkdir(originals, { recursive: true, mode: 0o700 });
-  if (await fs.realpath(originals) !== path.resolve(originals)) throw new Error('Refusing symlinked backup directory');
+  if (!sameRealPath(await fs.realpath(originals), path.resolve(originals))) throw new Error('Refusing symlinked backup directory');
   const backup = path.join(originals, entry.filename);
   try { await readRegular(backup); return; }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -200,4 +212,4 @@ async function syncFiles({ sourcePath, roots, storageDir, previousStorageDir, le
   return { model, changed, targets, errors, discovered: found.length };
 }
 
-module.exports = { extractModel, updateModel, withoutModel, unchangedExceptModel, readRegular, discoverAgents, syncFiles };
+module.exports = { extractModel, updateModel, withoutModel, unchangedExceptModel, readRegular, discoverAgents, syncFiles, sameRealPath };
