@@ -2,7 +2,11 @@
 
 Keep user-defined VS Code agents on the same model as the Copilot Chat Explore agent. The extension watches the locally generated Explore configuration and updates only the top-level `model` field of user-level agent files. It makes no network requests, collects no telemetry, has no runtime dependencies, and runs no polling process.
 
-> **Status:** `0.1.0` is a local Marketplace packaging candidate, not a published extension. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The owner confirmed Publisher ID `BelugaRex`; this candidate uses `BelugaRex.user-agent-model-sync`. Ownership and upload permissions have not been independently authenticated here. The manifest remains `private: true` to prevent accidental npm publication; this is not a Marketplace privacy setting. No Marketplace listing or icon exists yet. A locally built VSIX is not evidence of publication, Marketplace review, or cross-platform support.
+> **Release status:** [Agent Model Sync on the Marketplace](https://marketplace.visualstudio.com/items?itemName=BelugaRex.user-agent-model-sync) was first published as `0.1.0`. This source prepares the `0.1.1` Windows bugfix; a locally built package does not prove that the update is published. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The manifest's `private: true` prevents accidental npm publication, not Marketplace distribution.
+
+## 0.1.1 Windows fix
+
+Fixes synchronization blocking with `Refusing symlinked parent` solely because Windows returned `C:` for an input path beginning with `c:`. Only drive-letter case is normalized for comparison; real symbolic links/junctions and all other canonical-path differences remain refused. Synchronization behavior and model scope are otherwise unchanged. After installing an update, reload all relevant VS Code windows and check the activated version through the status command.
 
 ## What it does
 
@@ -15,10 +19,10 @@ Keep user-defined VS Code agents on the same model as the Copilot Chat Explore a
 ## Requirements
 
 - GitHub Copilot Chat installed and signed in, with an already generated, valid Explore cache and model.
-- VS Code `1.147.0` or later for this candidate. The manifest minimum is `^1.147.0`; this does not mean every later version has been tested.
+- VS Code `1.147.0` or later. The manifest minimum is `^1.147.0`; this does not mean every later version has been tested.
 - A local, user-level setup. Node `fs` is required, so the extension is not usable in browser-only `vscode.dev`.
 
-The tested pair is VS Code `1.147.0` with GitHub Copilot Chat `0.75.0` on WSL. Windows, macOS, Remote-SSH, and web were **not** tested. A previously installed local copy is also not evidence that this new packaging candidate has been host-tested; load the candidate and verify the actually activated code separately.
+The original live Copilot pair was VS Code `1.147.0` with GitHub Copilot Chat `0.75.0` on WSL. Automated verification installs the exact VSIX in an isolated Linux VS Code `1.147.0` Extension Host. The separate Windows filesystem regression tests cover drive-case handling and junction refusal, **not** a full Windows VS Code/Copilot integration test. macOS and Remote-SSH have not been host-tested; browser-only use is unsupported.
 
 ## Discovery scope
 
@@ -79,12 +83,13 @@ Disabling stops future writes. After uninstalling, reload VS Code to ensure the 
 
 ## Development
 
-- `npm test` uses the Node built-in test runner and requires no dependency installation. Node 20 currently works.
-- `npm run package` uses only the Python standard library and writes `dist/user-agent-model-sync-0.1.0.vsix`.
-- `npm run package:marketplace` uses the official packaging toolchain, requires `npm ci` and Node 22 or later, and writes a distinct `dist/user-agent-model-sync-0.1.0-marketplace.vsix`.
+- `npm test` uses the Node built-in test runner and requires no dependency installation. The main core/mock suite is verified on Linux; Node 20 currently works there.
+- On Windows, run `node --test test/windows.test.cjs` for the dedicated temporary-filesystem regressions. These cases are skipped on other platforms; the main Linux suite has POSIX permission and symlink assumptions.
+- `npm run package` uses only the Python standard library and writes `dist/user-agent-model-sync-0.1.1.vsix`.
+- `npm run package:marketplace` uses the official packaging toolchain, requires `npm ci` and Node 22 or later, and writes a distinct `dist/user-agent-model-sync-0.1.1-marketplace.vsix`.
 - `npm run verify:package` checks that Marketplace packaging candidate.
 
-The standard package uses an explicit `files` allowlist; development tooling and planning notes are excluded from the VSIX and are never runtime dependencies. Contributor notes are available in [DEVELOPMENT.md](https://github.com/BelugaRex/agent-model-sync/blob/main/DEVELOPMENT.md) and [PUBLISHING.md](https://github.com/BelugaRex/agent-model-sync/blob/main/PUBLISHING.md); both are excluded from the VSIX. Report problems through [GitHub Issues](https://github.com/BelugaRex/agent-model-sync/issues). An extension icon remains to be prepared before listing review.
+The standard package uses an explicit `files` allowlist; development tooling and planning notes are excluded from the VSIX and are never runtime dependencies. Contributor notes are available in [DEVELOPMENT.md](https://github.com/BelugaRex/agent-model-sync/blob/main/DEVELOPMENT.md) and [PUBLISHING.md](https://github.com/BelugaRex/agent-model-sync/blob/main/PUBLISHING.md); both are excluded from the VSIX. Report problems through [GitHub Issues](https://github.com/BelugaRex/agent-model-sync/issues).
 
 ## License
 

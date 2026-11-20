@@ -1,10 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-11-20
 
-### Local `0.1.0` packaging candidate
+### Fixed
 
-This candidate has not been published to any Marketplace. The owner confirmed Publisher ID `BelugaRex`, applied as `BelugaRex.user-agent-model-sync`; authenticated ownership/permissions and the final upload remain separate gates.
+- Fix Windows synchronization incorrectly blocking with `Refusing symlinked parent` when VS Code supplies a lower-case drive letter but native `realpath` returns an upper-case letter, such as `c:` versus `C:`.
+- Apply the same narrowly scoped comparison to the Explore source parent, user agent roots and original-backup directories. Only the drive-letter case may differ; other path differences and actual symbolic links/junctions remain refused.
+
+### Tests
+
+- Add Windows-only temporary-filesystem regressions for lower-case drive paths, both user roots, original preservation, repeated sync and junction rejection, plus a dedicated Windows CI job.
+- No model-selection UI, workspace-agent management or built-in-agent configuration is included in this patch.
+
+## 0.1.0 — 2026-11-20
+
+Initial Marketplace release as `BelugaRex.user-agent-model-sync`.
 
 #### Synchronization behavior
 
@@ -24,8 +34,8 @@ This candidate has not been published to any Marketplace. The owner confirmed Pu
 - Refuses activation before registering commands when the old `belugarex-local.user-agent-model-sync` is exposed, even if inactive; requires stopping it and reloading all shared-HOME windows. Does not change the shared enabled setting. This is not a cross-process lock.
 - When the separately configured Cavecrew legacy writer is present, updates its global enabled setting to request a stop before synchronizing.
 
-#### Packaging preparation
+#### Packaging and validation
 
-- Adds a standard packaged candidate alongside the existing local VSIX artifact, using an explicit files allowlist.
-- Adds public-facing documentation, this changelog and real public source/support URLs; no Marketplace release is implied.
-- Tested against VS Code `1.147.0` with GitHub Copilot Chat `0.75.0` on WSL only; other platforms were not tested.
+- Uses the official VSIX packer and an explicit files allowlist, with public source/support URLs.
+- Adds verification-only GitHub CI that validates the exact built VSIX in an isolated Linux VS Code `1.147.0` Extension Host.
+- The initial live Copilot pair was VS Code `1.147.0` / Copilot Chat `0.75.0` on WSL. Windows path handling required the follow-up fix in `0.1.1`; other desktop platforms were not host-tested.

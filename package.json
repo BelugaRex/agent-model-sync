@@ -3,7 +3,7 @@
   "displayName": "Agent Model Sync",
   "description": "Keep your user-defined VS Code agents on the same model as the Explore agent.",
   "publisher": "BelugaRex",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "license": "MIT",
   "repository": {
@@ -74,7 +74,7 @@
     "test:host": "node test/host/run-vsix.cjs",
     "package": "python3 build_vsix.py",
     "package:list": "vsce ls --no-dependencies",
-    "package:marketplace": "node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && vsce package --no-dependencies --out dist/user-agent-model-sync-0.1.0-marketplace.vsix",
+    "package:marketplace": "node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && vsce package --no-dependencies --out dist/user-agent-model-sync-0.1.1-marketplace.vsix",
     "verify:package": "python3 -I -B scripts/verify-package.py"
   },
   "devDependencies": {

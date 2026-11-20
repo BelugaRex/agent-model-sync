@@ -144,6 +144,8 @@ class PackageTests(unittest.TestCase):
 
     def test_lockfile_matches_development_tools(self):
         lock = json.loads((ROOT / 'package-lock.json').read_text())
+        self.assertEqual(lock['version'], self.metadata['version'])
+        self.assertEqual(lock['packages']['']['version'], self.metadata['version'])
         self.assertEqual(lock['packages']['']['devDependencies'], self.metadata['devDependencies'])
         self.assertEqual(lock['packages']['']['engines'], self.metadata['engines'])
         self.assertEqual(lock['packages']['node_modules/@vscode/vsce']['version'],
