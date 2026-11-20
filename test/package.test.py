@@ -150,6 +150,17 @@ class PackageTests(unittest.TestCase):
                          self.metadata['devDependencies']['@vscode/vsce'])
         self.assertNotIn('dependencies', self.metadata)
 
+    def test_public_repository_metadata_is_consistent(self):
+        base = 'https://github.com/BelugaRex/agent-model-sync'
+        self.assertEqual(self.metadata['repository'], {'type': 'git', 'url': base + '.git'})
+        self.assertEqual(self.metadata['bugs'], {'url': base + '/issues'})
+        self.assertEqual(self.metadata['homepage'], base + '#readme')
+        self.assertNotIn('--allow-missing-repository', self.metadata['scripts']['package:marketplace'])
+        readme = (ROOT / 'README.md').read_text()
+        for url in (base, base + '/issues', base + '/blob/main/DEVELOPMENT.md',
+                    base + '/blob/main/PUBLISHING.md'):
+            self.assertIn(url, readme)
+
     def test_real_packer_creates_dist_and_excludes_development(self):
         sandbox = self.directory / 'clean-copy'
         sandbox.mkdir()

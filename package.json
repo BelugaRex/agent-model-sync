@@ -6,6 +6,14 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BelugaRex/agent-model-sync.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BelugaRex/agent-model-sync/issues"
+  },
+  "homepage": "https://github.com/BelugaRex/agent-model-sync#readme",
   "engines": {
     "vscode": "^1.147.0"
   },
@@ -65,7 +73,7 @@
     "test:package": "python3 -I -B test/package.test.py",
     "package": "python3 build_vsix.py",
     "package:list": "vsce ls --no-dependencies",
-    "package:marketplace": "node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && vsce package --no-dependencies --allow-missing-repository --out dist/user-agent-model-sync-0.1.0-marketplace.vsix",
+    "package:marketplace": "node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && vsce package --no-dependencies --out dist/user-agent-model-sync-0.1.0-marketplace.vsix",
     "verify:package": "python3 -I -B scripts/verify-package.py"
   },
   "devDependencies": {

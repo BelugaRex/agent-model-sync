@@ -2,7 +2,7 @@
 
 Keep user-defined VS Code agents on the same model as the Copilot Chat Explore agent. The extension watches the locally generated Explore configuration and updates only the top-level `model` field of user-level agent files. It makes no network requests, collects no telemetry, has no runtime dependencies, and runs no polling process.
 
-> **Status:** `0.1.0` is a local Marketplace packaging candidate, not a published extension. The manifest remains `private: true`; the publisher `belugarex-local` has not been verified as registered; and no Marketplace listing, icon, or repository URL exists yet. A locally built VSIX is not evidence of publication, Marketplace review, or cross-platform support.
+> **Status:** `0.1.0` is a local Marketplace packaging candidate, not a published extension. [Source code](https://github.com/BelugaRex/agent-model-sync) and [issue reporting](https://github.com/BelugaRex/agent-model-sync/issues) are public. The manifest remains `private: true` to prevent accidental npm publication; this is not a Marketplace privacy setting. The publisher `belugarex-local` has not been verified as registered, and no Marketplace listing or icon exists yet. A locally built VSIX is not evidence of publication, Marketplace review, or cross-platform support.
 
 ## What it does
 
@@ -78,7 +78,7 @@ Disabling stops future writes. After uninstalling, reload VS Code to ensure the 
 - `npm run package:marketplace` uses the official packaging toolchain, requires `npm ci` and Node 22 or later, and writes a distinct `dist/user-agent-model-sync-0.1.0-marketplace.vsix`.
 - `npm run verify:package` checks that Marketplace packaging candidate.
 
-The standard package uses an explicit `files` allowlist; development tooling and planning notes are excluded from the VSIX and are never runtime dependencies. Contributor notes live in `DEVELOPMENT.md` and `PUBLISHING.md`; both are excluded from the VSIX, so these plain filenames are used instead of public links. There is currently no icon or repository URL to point readers to.
+The standard package uses an explicit `files` allowlist; development tooling and planning notes are excluded from the VSIX and are never runtime dependencies. Contributor notes are available in [DEVELOPMENT.md](https://github.com/BelugaRex/agent-model-sync/blob/main/DEVELOPMENT.md) and [PUBLISHING.md](https://github.com/BelugaRex/agent-model-sync/blob/main/PUBLISHING.md); both are excluded from the VSIX. Report problems through [GitHub Issues](https://github.com/BelugaRex/agent-model-sync/issues). An extension icon remains to be prepared before listing review.
 
 ## License
 
